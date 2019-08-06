@@ -4,28 +4,31 @@ import mimetypes
 
 os.chdir("C:\\test")
 # walking thorough directory(searching all subdirectories(issueides))
-for root, dirs, files in os.walk("C:\\test", topdown=False):
-    for issueid in dirs:
-        # Printing subdirectory full name(root+issueid)
-        subdir = os.path.join(root, issueid)
-
-        # Searching files inside subdirectory(All attachments)
-        for rootsub, dirssub, filessub in os.walk(subdir, topdown=False):
-            # Getting file name inside curl request by attachmentfull name and attachment relative name
-            for attachname in filessub:
-                print(subdir)
-                print(os.path.join(rootsub, attachname))
-                #              issuename = issueid
-                attachfullpath = os.path.join(rootsub, attachname)
+dirs=os.scandir('c:\\test')
+basepath='C:\\test'
+for subdir in dirs:
+    if os.path.isdir(os.path.join(basepath,subdir)):
+      issueid=subdir.name
+      #print(issueid)
+      fullpath=os.path.join(basepath,issueid)
+      #print(fullpath)
+      # Searching files inside subdirectory(All attachments)
+      folders=os.scandir(os.path.join(fullpath))
+      for entry in folders:
+          attachname=entry.name
+          attachefullpath=os.path.join(fullpath,attachname)
+          if os.path.isfile(attachefullpath):
+                print(attachefullpath)
                 headers = {
                     'X-Atlassian-Token': 'nocheck',
                 }
-                type = (mimetypes.MimeTypes().guess_type(attachfullpath)[0])
+                type = (mimetypes.MimeTypes().guess_type(attachefullpath)[0])
                 files = {
-                    'file': (attachname, open(attachfullpath, 'rb'), type)
+                    'file': (attachname, open(attachefullpath, 'rb'), type)
                 }
                 response = requests.post(
-                    'https://{baseURL}/rest/api/2/issue/{}/attachments'.format(issueid),
+                    'https://demo.softgile.com/testjira/rest/api/2/issue/{}/attachments'.format(issueid),
                     headers=headers, files=files, auth=('Administrator', '******'))
                 print(response)
                 print(type)
+

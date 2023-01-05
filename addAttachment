@@ -1,0 +1,43 @@
+
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.attachment.FileSystemAttachmentDirectoryAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.MutableIssue
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.Files
+import java.lang.Object
+
+@Grapes(
+@Grab(group='com.mashape.unirest', module='unirest-java', version='1.4.9')
+)
+import com.mashape.unirest.http.Unirest
+import com.mashape.unirest.http.HttpResponse
+
+File getAttatchmentFile(String issuekey,String attatchmentId){
+    
+    return ComponentAccessor.getComponent(FileSystemAttachmentDirectoryAccessor.class).getAttachmentDirectory(issuekey).listFiles().find({
+        File it->
+         it.getName().equals(attatchmentId)
+    });
+}
+
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+def im = ComponentAccessor.issueManager
+def am = ComponentAccessor.attachmentManager
+MutableIssue issue = im.getIssueObject('AT-994')
+String attid=am.getAttachments(issue).sort{it.created}.last().id
+String filepath=getAttatchmentFile('AT-994', attid)
+Path path = Paths.get(filepath)
+byte[] bytes = Files.readAllBytes(path);
+
+def url="https://atin-liberty.atlassian.net/rest/api/3/issue/TP-29/attachments"
+//def url="https://webhook.site/fcee2d40-bfcf-4dd2-bf58-51b10f71fa82"
+def authString = "".getBytes().encodeBase64().toString()
+HttpResponse response = Unirest.post(url)
+         .basicAuth("","")
+         .header("Accept", "application/json")
+         .header("X-Atlassian-Token", "no-check")
+         .field("file", new File(filepath))
+         .asJson();
